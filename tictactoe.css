@@ -1,0 +1,44 @@
+p {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.boardArea {
+    margin: 0px;
+    border-width: 0px;
+    padding: 0px;
+    width: fit-content;
+}
+
+.board {
+    display: table;
+    border: solid;
+    border-width: 2px;
+    border-color: black;
+}
+
+.boardRow {
+    display: table-row;
+}
+
+.boardCell {
+    display: table-cell;
+    border: solid;
+    border-width: 2px;
+    border-color: black;
+    width: 100px;
+    height: 100px;
+    position: relative;
+}
+
+.boardCell p {
+    font-size: 95px;
+    margin: 0px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+
+.winnerBanner {
+    text-align: center;
+}
