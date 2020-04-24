@@ -1,15 +1,20 @@
 'use strict';
 
+// this is a cell of the board
+// it has a letter in it
 class BoardCell extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             "board": props.board,
+            // the instance of the Board class
             "number": props.number
+            // which cell is this?
         };
     }
     render() {
         var piece = this.state.board.getPeiceAt(this.state.number);
+        // what is the value in this cell
         var f = () => {this.clicked()};
         return (
             <div className="boardCell" onClick={f}>
@@ -19,15 +24,21 @@ class BoardCell extends React.Component {
     }
     clicked() {
         this.state.board.userTurn(this.state.number);
+        // indicate to the board that this particular
+        // cell was just clicked
     }
 }
 
+// it's just a row in the board
+// nothing special
 class BoardRow extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             "board": props.board,
             "number": props.number
+            // what is the number of the leftmost cell
+            // in this row?
         }
     }
     render() {
@@ -41,6 +52,7 @@ class BoardRow extends React.Component {
     }
 }
 
+// this displays below the game board
 class WinnerBanner extends React.Component {
     constructor(props) {
         super(props);
@@ -50,7 +62,9 @@ class WinnerBanner extends React.Component {
     }
     render() {
         var gameOver = this.state.parent.state.gameOver;
+        // is the game over
         var winner = this.state.parent.state.winner;
+        // if there is a winner, who is it?
         var text;
         if (!gameOver) {
             text = "Take Your Turn";
@@ -70,8 +84,11 @@ class WinnerBanner extends React.Component {
     }
 }
 
+// just a class containing the game logic
 class GameFuncs {
     static gameOver(gameState) {
+        // returns true iff all of the
+        // cells have been filled
         for (let i = 0; i < 9; i++) {
             if (gameState[i] == 0) {
                 return false;
@@ -80,6 +97,10 @@ class GameFuncs {
         return true;
     }
     static determineWinner(gameState) {
+        // determines the winner if any
+        // 0 for no winner
+        // 1 for user is winner
+        // 2 for computer is winner
         for (let i = 0; i < 9; i += 3) {
             if (gameState[i] == 0) {
                 continue;
@@ -121,11 +142,23 @@ class GameFuncs {
         return 0;
     }
     static determineMoveHelper(gameState,points,a,b,c) {
+        // increments the points counter if points need
+        // to be awards based on this potential winning configuration
+        // gives 1 point to empty cells with one other cell filled
+        // in this winning configuration
+        // (this will either block the player, or give the computer 2 in a row)
+        // gives 10 points to empty cells with two player cells
+        // in this winning configuration (stop the player winning if you can)
+        // gives 100 points to empty cells with two computer cells
+        // in this winning configuration (place the winning move if you can)
         var tally = [0,0,0];
+        // how many of each cell are in this winning configuration?
         tally[gameState[a]]++;
         tally[gameState[b]]++;
         tally[gameState[c]]++;
         if ((tally[0] == 3) || (tally[0] == 0)) {
+            // the winning configuration is either empty or full
+            // zero points either way
             return;
         }
         var increment;
@@ -141,8 +174,14 @@ class GameFuncs {
             }
         }
         else {
+            // the one empty spot has one player piece
+            // and one computer piece
+            // useless to play here
+            // zero points
             return;
         }
+        // increment is how many points to give to each empty
+        // cell in this winning configuration
         if (gameState[a] == 0) {
             points[a] += increment;
         }
@@ -154,7 +193,13 @@ class GameFuncs {
         }
     }
     static determineMove(gameState) {
+        // determines which move the computer should make
+        // first it gives points to the different cells based
+        // on the other pieces
         var points = [0,0,0,0,0,0,0,0,0];
+        // how many points are assigned to each cell
+        // the function calls below increment the point counters
+        // each call represents one of the possible ways to win
         GameFuncs.determineMoveHelper(gameState,points,0,1,2);
         GameFuncs.determineMoveHelper(gameState,points,3,4,5);
         GameFuncs.determineMoveHelper(gameState,points,6,7,8);
@@ -163,6 +208,9 @@ class GameFuncs {
         GameFuncs.determineMoveHelper(gameState,points,2,5,8);
         GameFuncs.determineMoveHelper(gameState,points,0,4,8);
         GameFuncs.determineMoveHelper(gameState,points,6,4,2);
+        // determine which cells have the maximal number
+        // of points
+        // then pick randomly among them
         var bestScore = points[0];
         var winners = [0];
         for (let i = 1; i < 9; i++) {
@@ -187,21 +235,28 @@ class GameFuncs {
     }
 }
 
+// Board is the 3 by 3 grid
+// and the banner under it
 class Board extends React.Component {
     constructor(props) {
         super(props);
+        // set all the variables to their
+        // initial values
         this.state = {
-            "gameOver": false,
-            "winner": 0,
-            "arr": [0,0,0,0,0,0,0,0,0],
+            "gameOver": false, // the game is not over
+            "winner": 0, // there is no winner yet
+            "arr": [0,0,0,0,0,0,0,0,0], // there are no pieces yet
             "parent": props.parent
         }
         this.state.parent.rememberBoard(this);
         if (!(this.state.parent.state.userFirst)) {
             this.computerTurn();
+            // if the setting userFirst is false
+            // then the computer makes the first move
         }
     }
     reset() {
+        // reset the game
         this.state.gameOver = false;
         this.state.winner = 0;
         this.state.arr = [0,0,0,0,0,0,0,0,0];
@@ -222,24 +277,33 @@ class Board extends React.Component {
         );
     }
     getPeiceAt(number) {
+        // returns the piece at a particular location
         var code = this.state.arr[number];
         return this.state.parent.state.pieces[code];
     }
     userTurn(number) {
+        // inplements the user's turn
         if (this.state.gameOver) {
             return;
+            // if the game is over
+            // ignore user input
         }
         if (this.state.arr[number] != 0) {
             return;
+            // if this cell is taken,
+            // ignore user input
         }
         this.state.arr[number] = 1;
+        // place a user piece in the request spot
         if (GameFuncs.determineWinner(this.state.arr) == 1) {
+            // if the user just won
             this.state.gameOver = true;
             this.state.winner = 1;
             this.setState(this.state);
             return;
         }
         if (GameFuncs.gameOver(this.state.arr)) {
+            // if all the spots are taken
             this.state.gameOver = true;
             this.setState(this.state);
             return;
@@ -248,14 +312,18 @@ class Board extends React.Component {
     }
     computerTurn() {
         var spot = GameFuncs.determineMove(this.state.arr);
+        // spot is where the computer should place its piece
         this.state.arr[spot] = 2;
+        // place a computer piece in the request spot
         if (GameFuncs.determineWinner(this.state.arr) == 2) {
+            // if the computer just won
             this.state.gameOver = true;
             this.state.winner = 2;
             this.setState(this.state);
             return;
         }
         if (GameFuncs.gameOver(this.state.arr)) {
+            // if all the spots are taken
             this.state.gameOver = true;
             this.setState(this.state);
             return;
@@ -264,6 +332,7 @@ class Board extends React.Component {
     }
 }
 
+// ButtonsArea holds the buttons that can change the settings
 class ButtonsArea extends React.Component {
     constructor(props) {
         super(props);
@@ -273,7 +342,8 @@ class ButtonsArea extends React.Component {
     }
     render() {
         var piece = this.state.parent.state.pieces[1];
-        var order;
+        // which piece is the user using?
+        var order; // is the player going first or second?
         if (this.state.parent.state.userFirst) {
             order = "first";
         }
@@ -294,12 +364,15 @@ class ButtonsArea extends React.Component {
     }
 }
 
+// TicTacToe encapsulates everything
 class TicTacToe extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             "pieces": ["","X","O"],
+            // which players use which pieces?
             "userFirst": true
+            // who goes first?
         };
     }
     changePiece() {
